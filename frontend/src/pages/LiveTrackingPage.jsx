@@ -39,115 +39,133 @@ export function LiveTrackingPage(){
     if (!token) return
     let cancelled = false
     setLoading(true)
+
     loadData().finally(() => { if (!cancelled) setLoading(false) })
+
     const s = getSocket()
+
     if (s) {
       s.on("activity:started", loadData)
       s.on("activity:stopped", loadData)
+
       return () => {
         cancelled = true
         s.off("activity:started", loadData)
         s.off("activity:stopped", loadData)
       }
     }
+
     return () => { cancelled = true }
+
   }, [token, loadData])
 
-  async function startActivity() {
-    if (!worker || !machine || !fuel) {
+  async function startActivity(){
+
+    if (!worker || !machine || !fuel){
       toast.error("Select worker, machine and fuel")
       return
     }
+
     setSubmitting(true)
-    try {
-      await api.post("/activities/start", { workerId: worker, machineId: machine, fuelTypeId: fuel })
+
+    try{
+
+      await api.post("/activities/start",{
+        workerId: worker,
+        machineId: machine,
+        fuelTypeId: fuel
+      })
+
       await loadData()
+
       toast.success("Activity started")
-    } catch (err) {
+
+    }catch(err){
       toast.error(err?.response?.data?.message || "Failed to start activity")
-    } finally {
+    }finally{
       setSubmitting(false)
     }
   }
 
-  async function stopActivity(id) {
+  async function stopActivity(id){
+
     setSubmitting(true)
-    try {
+
+    try{
+
       await api.post(`/activities/${id}/stop`)
+
       await loadData()
+
       toast.success("Activity stopped")
-    } catch (err) {
+
+    }catch(err){
       toast.error(err?.response?.data?.message || "Failed to stop activity")
-    } finally {
+    }finally{
       setSubmitting(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-slate-500 dark:text-slate-400">Loading…</p>
+  if (loading){
+    return(
+      <div className="flex items-center justify-center py-10">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Loading…
+        </p>
       </div>
     )
   }
 
-  return (
-    <div className="space-y-6">
+  return(
+    <div className="space-y-5">
 
-      <div className="rounded-2xl border p-4">
+      {/* Start Activity Card */}
+
+      <div className="rounded-xl border bg-white/90 p-4 dark:bg-slate-950/80">
 
         <div className="text-lg font-semibold">
           Live Worker Tracking
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
 
           <select
-            className="w-full rounded-xl rounded p-2 border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             value={worker}
             onChange={(e)=>setWorker(e.target.value)}
           >
-
             <option value="">Select Worker</option>
-
             {workers.map(w=>(
               <option key={w._id} value={w._id}>
                 {w.name}
               </option>
             ))}
-
           </select>
 
           <select
-            className="w-full rounded-xl rounded p-2 border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             value={machine}
             onChange={(e)=>setMachine(e.target.value)}
           >
-
             <option value="">Select Machine</option>
-
             {machines.map(m=>(
               <option key={m._id} value={m._id}>
                 {m.name}
               </option>
             ))}
-
           </select>
 
           <select
-            className="w-full rounded-xl rounded p-2 border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             value={fuel}
             onChange={(e)=>setFuel(e.target.value)}
           >
-
             <option value="">Select Fuel</option>
-
             {fuelTypes.map(f=>(
               <option key={f._id} value={f._id}>
                 {f.name}
               </option>
             ))}
-
           </select>
 
         </div>
@@ -155,51 +173,59 @@ export function LiveTrackingPage(){
         <button
           onClick={startActivity}
           disabled={submitting}
-          className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md disabled:opacity-60"
+          className="mt-3 bg-green-600 text-white text-sm px-3 py-2 rounded-md disabled:opacity-60"
         >
           {submitting ? "Starting…" : "Start Activity"}
         </button>
 
       </div>
 
-      <div className="rounded-2xl border p-4">
+      {/* Active Activities */}
+
+      <div className="rounded-xl border bg-white/90 p-4 dark:bg-slate-950/80">
 
         <div className="text-lg font-semibold">
           Active Activities
         </div>
 
         <div className="mt-4 space-y-2">
+
           {activities.length === 0 ? (
-            <p className="py-4 text-center text-slate-500 dark:text-slate-400">No active activities.</p>
+
+            <p className="py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+              No active activities.
+            </p>
+
           ) : (
-          activities.map(a=>(
-            <div
-              key={a._id}
-              className="flex justify-between border p-3 rounded dark:bg-slate-900/80"
-            >
 
-              <div>
+            activities.map(a=>(
+              <div
+                key={a._id}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border rounded-lg p-3 dark:bg-slate-900/80"
+              >
 
-                <div className="font-medium">
-                  {a.worker?.name}
+                <div>
+                  <div className="text-sm font-medium">
+                    {a.worker?.name}
+                  </div>
+
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {a.machine?.name} • {a.fuelType?.name}
+                  </div>
                 </div>
 
-                <div className="text-sm text-gray-500 ">
-                  {a.machine?.name} • {a.fuelType?.name}
-                </div>
+                <button
+                  onClick={()=>stopActivity(a._id)}
+                  disabled={submitting}
+                  className="bg-red-500 text-white text-xs px-3 py-1 rounded disabled:opacity-60"
+                >
+                  Stop
+                </button>
 
               </div>
+            ))
 
-              <button
-                onClick={()=>stopActivity(a._id)}
-                disabled={submitting}
-                className="bg-red-500 text-white px-3 py-1 rounded disabled:opacity-60"
-              >
-                Stop
-              </button>
-
-            </div>
-          )))}
+          )}
 
         </div>
 

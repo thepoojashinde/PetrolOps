@@ -1,63 +1,90 @@
-import { NavLink } from 'react-router-dom'
-import { useAuth } from '../context/auth.jsx'
+import { NavLink } from "react-router-dom"
+import { useAuth } from "../context/auth.jsx"
 
 const links = [
-  { to: '/app', label: 'Dashboard', end: true },
-  { to: '/app/fuel-types', label: 'Fuel Types' },
-  { to: '/app/machines', label: 'Machines' },
-  { to: '/app/workers', label: 'Workers' },
-  { to: '/app/live-tracking', label: 'Live Tracking' },
-  { to: '/app/sales', label: 'Sales' },
-  { to: '/app/tankers', label: 'Tankers' },
-  { to: '/app/reports', label: 'Reports' },
+  { to: "/app", label: "Dashboard", end: true },
+  { to: "/app/fuel-types", label: "Fuel Types" },
+  { to: "/app/machines", label: "Machines" },
+  { to: "/app/workers", label: "Workers" },
+  { to: "/app/live-tracking", label: "Live Tracking" },
+  { to: "/app/sales", label: "Sales" },
+  { to: "/app/tankers", label: "Tankers" },
+  { to: "/app/reports", label: "Reports" },
 ]
 
-export function Sidebar() {
+export function Sidebar({ open, setOpen }) {
   const { logout } = useAuth()
 
   return (
-    <aside className="hidden h-screen w-72 shrink-0 border-r border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60 lg:block">
-      <div className="px-5 py-6">
-        <div className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-          PetrolOps
-        </div>
-        <div className="mt-0.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-          Petrol Pump Management
-        </div>
-      </div>
+    <>
+      {/* Overlay (mobile only) */}
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+        />
+      )}
 
-      <nav className="px-3 pb-6">
-        <div className="space-y-1">
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 z-50 h-screen w-72
+        transform transition-transform duration-300 ease-in-out
+        bg-white/90 backdrop-blur-xl
+        border-r border-slate-200
+        shadow-xl
+        dark:bg-slate-900/95 dark:border-slate-800
+        ${open ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0 lg:static`}
+      >
+        {/* Logo */}
+        <div className="px-6 py-6 border-b border-slate-200 dark:border-slate-800">
+          <div className="text-xl font-bold text-slate-900 dark:text-white">
+            PetrolOps
+          </div>
+
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            Petrol Pump Management
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="px-4 py-4 space-y-1">
+
           {links.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               end={l.end}
+              onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                [
-                  'block rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                `block rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200
+                ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
-                ].join(' ')
+                    ? "bg-indigo-600 text-white shadow-md"
+                    : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`
               }
             >
               {l.label}
             </NavLink>
           ))}
-        </div>
 
-        <div className="mt-[330px] border-t border-slate-200 pt-4 dark:border-slate-800">
+        </nav>
+
+        {/* Bottom section */}
+        <div className="absolute bottom-0 w-full border-t border-slate-200 dark:border-slate-800 p-4">
+
           <button
-            type="button"
             onClick={logout}
-            className="w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            className="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium
+            text-slate-700 hover:bg-slate-100
+            dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Logout
           </button>
+
         </div>
-      </nav>
-    </aside>
+      </aside>
+    </>
   )
 }
-

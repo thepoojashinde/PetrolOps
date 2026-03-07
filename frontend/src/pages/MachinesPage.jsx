@@ -5,38 +5,61 @@ import { useToast } from "../context/toast.jsx"
 export function MachinesPage(){
 
   const { toast } = useToast()
+
   const [machines, setMachines] = useState([])
   const [fuelTypes, setFuelTypes] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+
   const [name, setName] = useState("")
   const [selectedFuels, setSelectedFuels] = useState([])
+
   const [editingMachine, setEditingMachine] = useState(null)
   const [editName, setEditName] = useState("")
   const [editSelectedFuels, setEditSelectedFuels] = useState([])
 
   useEffect(() => {
+
     let cancelled = false
-    async function load() {
+
+    async function load(){
+
       setLoading(true)
-      try {
+
+      try{
+
         const [machinesRes, fuelsRes] = await Promise.all([
           api.get("/machines"),
           api.get("/fuel-types"),
         ])
-        if (!cancelled) {
+
+        if(!cancelled){
           setMachines(machinesRes.items || machinesRes)
           setFuelTypes(fuelsRes.items || fuelsRes)
         }
-      } catch (err) {
-        if (!cancelled) toast.error(err?.response?.data?.message || "Failed to load")
-      } finally {
-        if (!cancelled) setLoading(false)
+
+      }catch(err){
+
+        if(!cancelled){
+          toast.error(err?.response?.data?.message || "Failed to load")
+        }
+
+      }finally{
+
+        if(!cancelled){
+          setLoading(false)
+        }
+
       }
+
     }
+
     load()
-    return () => { cancelled = true }
-  }, [toast])
+
+    return ()=>{ cancelled = true }
+
+  },[toast])
+
 
   function toggleFuel(id){
 
@@ -48,94 +71,162 @@ export function MachinesPage(){
 
   }
 
-  async function addMachine() {
-    if (!name?.trim()) { toast.error("Machine name required"); return }
-    if (selectedFuels.length === 0) { toast.error("Select at least one fuel type"); return }
+
+  async function addMachine(){
+
+    if(!name?.trim()){
+      toast.error("Machine name required")
+      return
+    }
+
+    if(selectedFuels.length === 0){
+      toast.error("Select at least one fuel type")
+      return
+    }
+
     setSubmitting(true)
-    try {
-      await api.post("/machines", { name: name.trim(), supportedFuelTypes: selectedFuels })
+
+    try{
+
+      await api.post("/machines",{
+        name: name.trim(),
+        supportedFuelTypes: selectedFuels
+      })
+
       const res = await api.get("/machines")
+
       setMachines(res.items || res)
-      setName(""); setSelectedFuels([])
+
+      setName("")
+      setSelectedFuels([])
+
       toast.success("Machine added")
-    } catch (err) {
+
+    }catch(err){
       toast.error(err?.response?.data?.message || "Failed to add machine")
-    } finally {
+    }finally{
       setSubmitting(false)
     }
+
   }
 
-  async function deleteMachine(id) {
-    if (!confirm("Delete this machine?")) return
-    try {
+
+  async function deleteMachine(id){
+
+    if(!confirm("Delete this machine?")) return
+
+    try{
+
       await api.del(`/machines/${id}`)
+
       const res = await api.get("/machines")
+
       setMachines(res.items || res)
+
       toast.success("Machine deleted")
-    } catch (err) {
+
+    }catch(err){
       toast.error(err?.response?.data?.message || "Failed to delete machine")
     }
+
   }
 
-  function openEditMachine(m) {
+
+  function openEditMachine(m){
+
     setEditingMachine(m)
+
     const ids = (m.supportedFuelTypes || []).map(f => f._id || f)
+
     setEditName(m.name ?? "")
     setEditSelectedFuels(ids)
+
   }
 
-  function toggleEditFuel(id) {
+
+  function toggleEditFuel(id){
+
     setEditSelectedFuels(prev =>
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter(f => f !== id)
+        : [...prev, id]
     )
+
   }
 
-  async function updateMachine() {
-    if (!editingMachine) return
-    if (!editName?.trim()) { toast.error("Machine name is required"); return }
-    if (editSelectedFuels.length === 0) { toast.error("Select at least one fuel type"); return }
+
+  async function updateMachine(){
+
+    if(!editingMachine) return
+
+    if(!editName?.trim()){
+      toast.error("Machine name is required")
+      return
+    }
+
+    if(editSelectedFuels.length === 0){
+      toast.error("Select at least one fuel type")
+      return
+    }
+
     setSubmitting(true)
-    try {
-      await api.put(`/machines/${editingMachine._id}`, {
+
+    try{
+
+      await api.put(`/machines/${editingMachine._id}`,{
         name: editName.trim(),
-        supportedFuelTypes: editSelectedFuels,
+        supportedFuelTypes: editSelectedFuels
       })
+
       const res = await api.get("/machines")
+
       setMachines(res.items || res)
+
       setEditingMachine(null)
+
       toast.success("Machine updated")
-    } catch (err) {
+
+    }catch(err){
       toast.error(err?.response?.data?.message || "Failed to update machine")
-    } finally {
+    }finally{
       setSubmitting(false)
     }
+
   }
+
 
   return (
 
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      <div className="rounded-2xl border bg-white/90 p-4 dark:bg-slate-950/80">
+      <div className="rounded-xl border bg-white/90 p-4 dark:bg-slate-950/80">
 
-        <div className="text-lg font-semibold tracking-tight">
+        <div className="text-lg font-semibold">
           Machines
         </div>
 
-        {/* CREATE MACHINE */}
+
+        {/* ADD MACHINE */}
 
         <div className="mt-4 space-y-3">
 
           <input
-            className="w-full rounded-xl p-2 border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             placeholder="Machine Name"
             value={name}
             onChange={(e)=>setName(e.target.value)}
           />
 
-          <div className="flex gap-3 flex-wrap">
+
+          {/* fuel types */}
+
+          <div className="flex flex-wrap gap-2">
 
             {fuelTypes.map(fuel=>(
-              <label key={fuel._id} className="flex items-center gap-2">
+              <label
+                key={fuel._id}
+                className="flex items-center gap-1 text-xs sm:text-sm"
+              >
 
                 <input
                   type="checkbox"
@@ -150,123 +241,156 @@ export function MachinesPage(){
 
           </div>
 
+
           <button
             onClick={addMachine}
             disabled={submitting}
-            className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-60"
+            className="bg-indigo-600 text-white text-sm px-3 py-2 rounded-md disabled:opacity-60"
           >
             {submitting ? "Adding…" : "Add Machine"}
           </button>
 
         </div>
 
+
         {/* MACHINE LIST */}
 
         <div className="mt-6 space-y-2">
+
           {loading ? (
-            <p className="py-6 text-center text-slate-500 dark:text-slate-400">Loading…</p>
+
+            <p className="py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+              Loading…
+            </p>
+
           ) : machines.length === 0 ? (
-            <p className="py-6 text-center text-slate-500 dark:text-slate-400">No machines yet. Add one above.</p>
+
+            <p className="py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+              No machines yet. Add one above.
+            </p>
+
           ) : (
-          machines.map(machine=>(
-            <div
-              key={machine._id}
-              className="flex justify-between border p-3 rounded"
-            >
 
-              <div>
+            machines.map(machine=>(
+              <div
+                key={machine._id}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border rounded-lg p-3"
+              >
 
-                <div className="font-medium">
-                  {machine.name}
+                <div>
+
+                  <div className="text-sm font-medium">
+                    {machine.name}
+                  </div>
+
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {machine.supportedFuelTypes?.map(f=>f.name).join(", ")}
+                  </div>
+
                 </div>
 
-                <div className="text-sm text-gray-500">
 
-                  {machine.supportedFuelTypes?.map(f=>f.name).join(", ")}
+                <div className="flex gap-2">
+
+                  <button
+                    onClick={()=>openEditMachine(machine)}
+                    className="rounded bg-indigo-100 px-2 py-1 text-xs text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={()=>deleteMachine(machine._id)}
+                    className="rounded bg-red-100 px-2 py-1 text-xs text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300"
+                  >
+                    Delete
+                  </button>
 
                 </div>
 
               </div>
+            ))
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => openEditMachine(machine)}
-                  className="rounded bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-800/50"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteMachine(machine._id)}
-                  className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-800/50"
-                >
-                  Delete
-                </button>
-              </div>
-
-            </div>
-          )))}
+          )}
 
         </div>
 
       </div>
 
+
+      {/* EDIT MODAL */}
+
       {editingMachine && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-machine-title"
-          onKeyDown={(e) => e.key === "Escape" && setEditingMachine(null)}
-        >
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-            <h3 id="edit-machine-title" className="text-lg font-semibold text-slate-800 dark:text-slate-200">Edit machine</h3>
+
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+
+          <div className="w-full max-w-md rounded-xl border bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+              Edit machine
+            </h3>
+
+
             <div className="mt-4 space-y-3">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-400">Machine name</label>
-                <input
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                  placeholder="Machine name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
+
+              <input
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                value={editName}
+                onChange={(e)=>setEditName(e.target.value)}
+              />
+
+
+              <div className="flex flex-wrap gap-2">
+
+                {fuelTypes.map(fuel=>(
+                  <label
+                    key={fuel._id}
+                    className="flex items-center gap-1 text-xs sm:text-sm"
+                  >
+
+                    <input
+                      type="checkbox"
+                      checked={editSelectedFuels.includes(fuel._id)}
+                      onChange={()=>toggleEditFuel(fuel._id)}
+                    />
+
+                    {fuel.name}
+
+                  </label>
+                ))}
+
               </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-600 dark:text-slate-400">Supported fuel types</label>
-                <div className="flex flex-wrap gap-3">
-                  {fuelTypes.map(fuel => (
-                    <label key={fuel._id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={editSelectedFuels.includes(fuel._id)}
-                        onChange={() => toggleEditFuel(fuel._id)}
-                      />
-                      {fuel.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
+
             </div>
-            <div className="mt-6 flex justify-end gap-2">
+
+
+            <div className="mt-5 flex justify-end gap-2">
+
               <button
-                type="button"
-                onClick={() => setEditingMachine(null)}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                onClick={()=>setEditingMachine(null)}
+                className="rounded-md border px-3 py-1 text-xs dark:border-slate-600"
               >
                 Cancel
               </button>
+
               <button
-                type="button"
                 onClick={updateMachine}
                 disabled={submitting}
-                className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                className="rounded-md bg-indigo-600 px-3 py-1 text-xs text-white"
               >
                 {submitting ? "Saving…" : "Save"}
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
+
     </div>
 
   )
+
 }
