@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
   }, [logout])
 
   const login = useCallback(async ({ email, password }) => {
-    const res = await api.post('/login', { email, password })
+  const res = await api.post('/auth/login', { email, password })
     localStorage.setItem(TOKEN_KEY, res.token)
     setToken(res.token)
     setAdmin(res.admin)
@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   const register = useCallback(async ({ email, password }) => {
-    const res = await api.post('/register', { email, password })
+  const res = await api.post('/auth/register', { email, password })
     localStorage.setItem(TOKEN_KEY, res.token)
     setToken(res.token)
     setAdmin(res.admin)
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
       return
     }
     try {
-      const res = await api.get('/me')
+      const res = await api.get('/auth/me')
       setAdmin(res.admin)
     } catch {
       logout()
