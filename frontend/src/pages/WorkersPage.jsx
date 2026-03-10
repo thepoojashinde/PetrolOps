@@ -7,6 +7,7 @@ export function WorkersPage(){
   const { toast } = useToast()
 
   const [workers,setWorkers] = useState([])
+  const [fuelTypes, setFuelTypes] = useState([])
   const [loading,setLoading] = useState(true)
   const [submitting,setSubmitting] = useState(false)
 
@@ -19,6 +20,8 @@ export function WorkersPage(){
   const [editPhone,setEditPhone] = useState("")
   const [editPassword,setEditPassword] = useState("")
   const [editIsActive,setEditIsActive] = useState(true)
+  const [assignedFuelTypeIds, setAssignedFuelTypeIds] = useState([])
+  const [editAssignedFuelTypeIds, setEditAssignedFuelTypeIds] = useState([])
 
   const modalRef = useRef(null)
 
@@ -27,15 +30,21 @@ export function WorkersPage(){
 
     let cancelled=false
 
-    async function loadWorkers(){
+    async function loadData(){
 
       setLoading(true)
 
       try{
 
-        const data = await api.get("/workers")
+        const [workersRes, fuelsRes] = await Promise.all([
+          api.get("/workers"),
+          api.get("/fuel-types"),
+        ])
 
-        if(!cancelled) setWorkers(data.items || data)
+        if(!cancelled){
+          setWorkers(workersRes.items || workersRes)
+          setFuelTypes(fuelsRes.items ?? [])
+        }
 
       }catch(err){
 
@@ -50,7 +59,7 @@ export function WorkersPage(){
 
     }
 
-    loadWorkers()
+    loadData()
 
     return()=>{ cancelled=true }
 
@@ -81,7 +90,8 @@ export function WorkersPage(){
       await api.post("/workers",{
         name:name.trim(),
         phone:phone.trim(),
-        password
+        password,
+        assignedFuelTypeIds,
       })
 
       const data = await api.get("/workers")
@@ -90,6 +100,7 @@ export function WorkersPage(){
       setName("")
       setPhone("")
       setPassword("")
+      setAssignedFuelTypeIds([])
 
       toast.success("Worker added")
 
@@ -135,6 +146,9 @@ export function WorkersPage(){
     setEditPhone(w.phone ?? "")
     setEditPassword("")
     setEditIsActive(w.isActive !== false)
+    setEditAssignedFuelTypeIds(
+      (w.assignedFuelTypes || []).map((f)=>f._id || f).filter(Boolean)
+    )
 
   }
 
@@ -160,7 +174,8 @@ export function WorkersPage(){
       const body = {
         name:editName.trim(),
         phone:editPhone.trim(),
-        isActive:editIsActive
+        isActive:editIsActive,
+        assignedFuelTypeIds: editAssignedFuelTypeIds,
       }
 
       if(editPassword) body.password = editPassword
@@ -275,21 +290,31 @@ export function WorkersPage(){
                 </div>
 
 
-                <div className="flex gap-2">
+                <div className="flex flex-col items-end gap-1 text-right">
 
-                  <button
-                    onClick={()=>openEditWorker(worker)}
-                    className="rounded bg-indigo-100 px-2 py-1 text-xs dark:bg-indigo-900"
-                  >
-                    Edit
-                  </button>
+                  <div className="text-[11px] text-slate-500">
+                    {(worker.assignedFuelTypes || []).length
+                      ? `Fuels: ${(worker.assignedFuelTypes || []).map((f)=>f.name).join(", ")}`
+                      : "No fuel types assigned"}
+                  </div>
 
-                  <button
-                    onClick={()=>deleteWorker(worker._id)}
-                    className="rounded bg-red-100 px-2 py-1 text-xs dark:bg-red-900"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-2">
+
+                    <button
+                      onClick={()=>openEditWorker(worker)}
+                      className="rounded bg-indigo-100 px-2 py-1 text-xs dark:bg-indigo-900"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={()=>deleteWorker(worker._id)}
+                      className="rounded bg-red-100 px-2 py-1 text-xs dark:bg-red-900"
+                    >
+                      Delete
+                    </button>
+
+                  </div>
 
                 </div>
 
@@ -305,7 +330,7 @@ export function WorkersPage(){
 
 
 
-      {/* EDIT MODAL */}
+        {/* EDIT MODAL */}
 
       {editingWorker && (
 
@@ -344,6 +369,30 @@ export function WorkersPage(){
                 value={editPassword}
                 onChange={(e)=>setEditPassword(e.target.value)}
               />
+
+              <div className="space-y-1 text-sm">
+                <div className="font-medium">
+                  Assigned fuel types
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {fuelTypes.map((f)=>(
+                    <label key={f._id} className="flex items-center gap-1 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={editAssignedFuelTypeIds.includes(f._id)}
+                        onChange={(e)=>{
+                          if(e.target.checked){
+                            setEditAssignedFuelTypeIds((prev)=>[...prev,f._id])
+                          }else{
+                            setEditAssignedFuelTypeIds((prev)=>prev.filter(id=>id!==f._id))
+                          }
+                        }}
+                      />
+                      {f.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               <label className="flex items-center gap-2 text-sm">
 

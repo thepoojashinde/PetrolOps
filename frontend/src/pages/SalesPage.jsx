@@ -17,6 +17,7 @@ export function SalesPage() {
   const [machine, setMachine] = useState("")
   const [fuel, setFuel] = useState("")
   const [quantity, setQuantity] = useState("")
+  const [paymentMethod, setPaymentMethod] = useState("cash")
 
   useEffect(() => {
 
@@ -82,6 +83,7 @@ export function SalesPage() {
         machineId: machine,
         fuelTypeId: fuel,
         quantityLiters: qty,
+        paymentMethod,
       })
 
       const salesRes = await api.get("/sales")
@@ -89,6 +91,7 @@ export function SalesPage() {
       setSales(salesRes.items ?? [])
 
       setQuantity("")
+      setPaymentMethod("cash")
 
     }catch(err){
 
@@ -131,6 +134,7 @@ export function SalesPage() {
         machineId: machine,
         fuelTypeId: fuel,
         quantityLiters: qty,
+        paymentMethod,
       })
 
       const salesRes = await api.get("/sales")
@@ -143,6 +147,7 @@ export function SalesPage() {
       setMachine("")
       setFuel("")
       setQuantity("")
+      setPaymentMethod("cash")
 
     }catch(err){
 
@@ -166,6 +171,7 @@ export function SalesPage() {
     setMachine(s.machine?._id ?? s.machine ?? "")
     setFuel(s.fuelType?._id ?? s.fuelType ?? "")
     setQuantity(String(s.quantityLiters ?? s.quantity ?? ""))
+    setPaymentMethod(s.paymentMethod || "cash")
 
     setError("")
 
@@ -239,7 +245,7 @@ export function SalesPage() {
           Record sale
         </h2>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
 
           <select
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
@@ -283,6 +289,18 @@ export function SalesPage() {
             value={quantity}
             onChange={(e)=>setQuantity(e.target.value)}
           />
+
+          <select
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+            value={paymentMethod}
+            onChange={(e)=>setPaymentMethod(e.target.value)}
+          >
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="card">Card</option>
+            <option value="credit">Credit</option>
+            <option value="other">Other</option>
+          </select>
 
         </div>
 
@@ -328,6 +346,7 @@ export function SalesPage() {
                 <th className="p-2 text-left">Fuel</th>
                 <th className="p-2 text-left">Quantity</th>
                 <th className="p-2 text-left">Amount</th>
+                <th className="p-2 text-left">Payment</th>
                 <th className="p-2 text-left">Actions</th>
 
               </tr>
@@ -355,6 +374,7 @@ export function SalesPage() {
                     <td className="p-2">{s.fuelType?.name ?? "—"}</td>
                     <td className="p-2">{(s.quantityLiters ?? s.quantity ?? 0)} L</td>
                     <td className="p-2 font-medium">₹ {s.amount ?? 0}</td>
+                    <td className="p-2 capitalize">{s.paymentMethod || "cash"}</td>
 
                     <td className="p-2">
 

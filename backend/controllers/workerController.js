@@ -8,6 +8,7 @@ async function listWorkers(req, res, next) {
       .select('-passwordHash')
       .populate('currentMachine', 'name')
       .populate('currentFuelType', 'name')
+      .populate('assignedFuelTypes', 'name')
       .sort({ name: 1 })
     res.json({ items })
   } catch (err) {
@@ -17,7 +18,7 @@ async function listWorkers(req, res, next) {
 
 async function createWorker(req, res, next) {
   try {
-    const { name, phone, password, isActive } = req.body || {}
+    const { name, phone, password, isActive, assignedFuelTypeIds } = req.body || {}
     if (!name) throw httpError(400, 'Name is required')
     if (!phone) throw httpError(400, 'Phone is required')
     if (!password) throw httpError(400, 'Password is required')
@@ -29,6 +30,9 @@ async function createWorker(req, res, next) {
       phone: String(phone).trim(),
       passwordHash,
       isActive: isActive == null ? true : Boolean(isActive),
+      assignedFuelTypes: Array.isArray(assignedFuelTypeIds)
+        ? assignedFuelTypeIds.filter(Boolean)
+        : [],
     })
 
     const safe = await Worker.findById(doc._id).select('-passwordHash')
@@ -42,12 +46,17 @@ async function createWorker(req, res, next) {
 async function updateWorker(req, res, next) {
   try {
     const { id } = req.params
-    const { name, phone, password, isActive } = req.body || {}
+    const { name, phone, password, isActive, assignedFuelTypeIds } = req.body || {}
     const patch = {}
     if (name != null) patch.name = String(name).trim()
     if (phone != null) patch.phone = String(phone).trim()
     if (isActive != null) patch.isActive = Boolean(isActive)
     if (password != null && String(password).length > 0) patch.passwordHash = await bcrypt.hash(String(password), 10)
+    if (assignedFuelTypeIds != null) {
+      patch.assignedFuelTypes = Array.isArray(assignedFuelTypeIds)
+        ? assignedFuelTypeIds.filter(Boolean)
+        : []
+    }
 
     const doc = await Worker.findOneAndUpdate({ _id: id, adminId: req.user.id }, patch, { new: true }).select('-passwordHash')
     if (!doc) throw httpError(404, 'Worker not found')

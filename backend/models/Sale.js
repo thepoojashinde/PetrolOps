@@ -9,6 +9,11 @@ const saleSchema = new mongoose.Schema(
     quantityLiters: { type: Number, required: true, min: 0.01 },
     pricePerLiterAtSale: { type: Number, required: true, min: 0 },
     amount: { type: Number, required: true, min: 0 },
+    paymentMethod: {
+      type: String,
+      enum: ['cash', 'upi', 'card', 'credit', 'other'],
+      default: 'cash',
+    },
   },
   { timestamps: true },
 )

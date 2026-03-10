@@ -23,7 +23,7 @@ async function listSales(req, res, next) {
 async function createSale(req, res, next) {
   const session = await mongoose.startSession()
   try {
-    const { workerId, machineId, fuelTypeId, quantityLiters } = req.body || {}
+    const { workerId, machineId, fuelTypeId, quantityLiters, paymentMethod } = req.body || {}
     const qty = Number(quantityLiters)
     if (!workerId || !machineId || !fuelTypeId) throw httpError(400, 'workerId, machineId, fuelTypeId are required')
     if (!qty || qty <= 0) throw httpError(400, 'quantityLiters must be > 0')
@@ -57,6 +57,10 @@ async function createSale(req, res, next) {
       const price = Number(updatedFuel.pricePerLiter)
       const amount = Number((qty * price).toFixed(2))
 
+      const method = ['cash', 'upi', 'card', 'credit', 'other'].includes(paymentMethod)
+        ? paymentMethod
+        : 'cash'
+
       saleDoc = await Sale.create(
         [
           {
@@ -67,6 +71,7 @@ async function createSale(req, res, next) {
             quantityLiters: qty,
             pricePerLiterAtSale: price,
             amount,
+            paymentMethod: method,
           },
         ],
         { session },
@@ -92,7 +97,7 @@ async function updateSale(req, res, next) {
   const session = await mongoose.startSession()
   try {
     const { id } = req.params
-    const { workerId, machineId, fuelTypeId, quantityLiters } = req.body || {}
+    const { workerId, machineId, fuelTypeId, quantityLiters, paymentMethod } = req.body || {}
 
     const existing = await Sale.findOne({ _id: id, adminId: req.user.id })
       .populate('fuelType')
@@ -152,6 +157,11 @@ async function updateSale(req, res, next) {
       const price = Number(fuelType.pricePerLiter)
       const amount = Number((qty * price).toFixed(2))
 
+      const method =
+        paymentMethod && ['cash', 'upi', 'card', 'credit', 'other'].includes(paymentMethod)
+          ? paymentMethod
+          : existing.paymentMethod || 'cash'
+
       updated = await Sale.findOneAndUpdate(
         { _id: id, adminId: req.user.id },
         {
@@ -161,6 +171,7 @@ async function updateSale(req, res, next) {
           quantityLiters: qty,
           pricePerLiterAtSale: price,
           amount,
+          paymentMethod: method,
         },
         { new: true, session },
       )

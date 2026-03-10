@@ -10,6 +10,13 @@ const workerSchema = new mongoose.Schema(
     isWorking: { type: Boolean, default: false },
     currentMachine: { type: mongoose.Schema.Types.ObjectId, ref: 'Machine', default: null },
     currentFuelType: { type: mongoose.Schema.Types.ObjectId, ref: 'FuelType', default: null },
+    assignedFuelTypes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'FuelType',
+        default: [],
+      },
+    ],
   },
   { timestamps: true },
 )
